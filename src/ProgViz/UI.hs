@@ -32,10 +32,13 @@ label :: String -> IO Element -> IO Element
 label str elt = UI.div #. "label" #+ [UI.span #. "label" #+ [string str], elt]
 
 render :: Value -> IO Element
-render (Num n)   = UI.div #. "value" #+ [string $ show n]
-render (Str s)   = UI.div #. "value" #+ [string s]
-render (Bool b)  = UI.div #. "value" #+ [string $ show b]
-render (List ls) = list ls
+render (Num n)           = UI.div #. "value" #+ [string $ show n]
+render (Str s)           = UI.div #. "value" #+ [string s]
+render (Bool b)          = UI.div #. "value" #+ [string $ show b]
+render (List ls)         = list ls
+render (Node idn _ _)    = UI.div #. "node"  #+ [string $ show idn]
+render (Graph _ _ edges) = UI.div #. "graph" #+ [string . show $ fst <$> edges,
+                                                string . show $ snd <$> edges]
 
 renderLabeled :: (String, Value) -> IO Element
 renderLabeled (str, val) = label (str ++ ": ") $ render val

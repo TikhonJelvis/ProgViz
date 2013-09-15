@@ -34,7 +34,8 @@ data Method = Add
             | Empty
             | Start
             | Mark
-            | Neighbors deriving (Show, Eq)
+            | Neighbors
+            | Create deriving (Show, Eq)
 
 toMethod :: String -> Method
 toMethod "add"       = Add
@@ -47,6 +48,7 @@ toMethod "empty"     = Empty
 toMethod "start"     = Start
 toMethod "mark"      = Mark
 toMethod "neighbors" = Neighbors
+toMethod "Create"    = Create
 toMethod _           = error "Unknown method name!"
 
 data Op = Plus | Minus | Mult | Gt | Lt | Geq | Leq | Eq | Neq deriving (Show, Eq)
@@ -56,22 +58,22 @@ data Value = Num Integer
            | Str String
            | Bool Bool
            | List [Value]
-           | Node Int String Bool Value
-           | Graph [Value] [(Int, Int)] deriving (Eq, Ord)
+           | Node Integer String Bool
+           | Graph String [Value] [(Integer, Integer)] deriving (Eq, Ord)
 
-setNode :: Value -> Int -> Value -> Value
-setNode (Graph nodes edges) idn new = Graph (updateNode <$> nodes) edges
-  where updateNode node@(Node idn' _ _ _) = if idn' == idn then new else node
+setNode :: Value -> Integer -> Value -> Value
+setNode (Graph name nodes edges) idn new = Graph name (updateNode <$> nodes) edges
+  where updateNode node@(Node idn' _ _) = if idn' == idn then new else node
         updateNode _ = error "Graphs should only contain nodes!"
 setNode _ _ _ = error "You can only set the node in a graph!"
 
 instance Show Value where
-  show (Num n)             = show n
-  show (Str s)             = s
-  show (Bool b)            = show b
-  show (List ls)           = intercalate "," $ show <$> ls
-  show (Node n graph b v)  = printf "<%d,%s, %s, %s>" n graph (show b) (show v)
-  show (Graph nodes edges) = show nodes ++ "\n" ++ show edges
+  show (Num n)                  = show n
+  show (Str s)                  = s
+  show (Bool b)                 = show b
+  show (List ls)                = intercalate "," $ show <$> ls
+  show (Node n graph b)         = printf "<%d,%s, %s, %s>" n graph (show b)
+  show (Graph name nodes edges) = name ++ "\n" ++ show nodes ++ "\n" ++ show edges
 
 listGet :: Value -> Value -> Value
 listGet (List values) (Num index) = values !! fromInteger index

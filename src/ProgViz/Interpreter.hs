@@ -4,6 +4,7 @@ import           Control.Applicative ((<$>), (<*>))
 import           Control.Monad       (forM)
 import           Control.Monad.State (evalState)
 
+import           Data.List
 import qualified Data.Map            as M
 
 import           ProgViz.State       (Result)
@@ -104,18 +105,28 @@ doMethod Empty name [] = do
   List vals <- S.get name
   return . Bool $ null vals
 doMethod Start name [] = do
-  Graph (n:_) _ <- S.get name
+  Graph _ (n:_) _ <- S.get name
   return n
 doMethod Mark name [] = do
-  Node idn graph _ value <- S.get name
-  let new = Node idn graph True value
+  Node idn graph _ <- S.get name
+  let new = Node idn graph True
   g <- S.get graph
   let g' = setNode g idn new
   S.set graph g'
   return new
 doMethod Neighbors name [] = do
-  Node idn graph _ _ <- S.get name
-  Graph nodes edges <- S.get graph
+  Node idn graph _2 <- S.get name
+  Graph _ nodes edges <- S.get graph
   let idns = snd <$> filter (\ (a, _) -> a == idn) edges
-  return . List $ filter (\ (Node idn' _ _ _) -> idn' `elem` idns) nodes
+  return . List $ filter (\ (Node idn' _ _) -> idn' `elem` idns) nodes
+doMethod Create "Graph" [Str name, List edges] =
+  return $ Graph name (node . toInt <$> nub edges) (pairs $ toInt <$> edges)
+  where node idn = Node idn name False
+        toInt (Num n) = n
+        toInt _       = error "Wrong type!"
 doMethod _ _ _               = error "Invalid method call!" 
+
+pairs :: [a] -> [(a,a)]
+pairs []       = []
+pairs [_]      = []
+pairs (a:b:xs) = (a, b) : pairs xs
