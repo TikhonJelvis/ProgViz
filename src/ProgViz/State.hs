@@ -1,4 +1,4 @@
-module ProgViz.State (Result, get, set, update) where
+module ProgViz.State (Result, State, get, set, update, env) where
 
 import qualified Control.Monad.State as S
 
@@ -25,3 +25,7 @@ set name value = S.modify $ M.insert name value
 
 update :: Name -> (Value -> Value) -> Result ()
 update name fn = S.modify $ M.update (return . fn) name
+
+-- | Return the current environment.
+env :: Result State
+env = S.get

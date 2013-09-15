@@ -8,18 +8,19 @@ import qualified Language.Python.Version3 as Py
 import qualified ProgViz.Types            as PV
 
 testParse :: String -> PV.Statement
-testParse str = case Py.parseModule str "test" of
+testParse str = case Py.parseModule (str ++ "\n") "test" of
   Left err       -> error $ "Parse failed!" ++ show err
   Right (res, _) -> convertModule res
 
 convertModule :: Py.Module a -> PV.Statement
-convertModule (Py.Module statements) = foldl1 PV.Seq $ map convertStatement statements
+convertModule (Py.Module statements) = PV.combine $ map convertStatement statements
 
 convertStatement :: Py.Statement a -> PV.Statement
 convertStatement (Py.Assign { Py.assign_to = [lhs], Py.assign_expr = rhs }) =
   PV.Assign (convertExpr lhs) (convertExpr rhs)
-convertStatement (Py.StmtExpr { Py.stmt_expr = expr}) =
-  PV.Expr $ convertExpr expr
+convertStatement (Py.StmtExpr expr _) = PV.Expr $ convertExpr expr
+convertStatement (Py.For [Py.Var var _] ls body _ _) =
+  PV.For (Py.ident_string var) (convertExpr ls) (PV.combine $ convertStatement <$> body)
 convertStatement _ = error "Unsupported language construct."
 
 convertExpr :: Py.Expr a -> PV.Expr
@@ -56,3 +57,4 @@ convertOp Py.NotEquals {}         = PV.Neq
 convertOp Py.Multiply {}          = PV.Mult
 convertOp Py.Plus {}              = PV.Plus
 convertOp Py.Minus {}             = PV.Minus
+convertOp _                       = error "Unsupported operator."

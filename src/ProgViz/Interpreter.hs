@@ -1,9 +1,13 @@
 module ProgViz.Interpreter where
 
-import           Control.Applicative
+import           Control.Applicative ((<$>), (<*>))
+import           Control.Monad       (forM)
+import           Control.Monad.State (evalState)
 
-import           ProgViz.State (Result)
-import qualified ProgViz.State as S
+import qualified Data.Map            as M
+
+import           ProgViz.State       (Result)
+import qualified ProgViz.State       as S
 import           ProgViz.Types
 
 updateList :: Int -> a -> [a] -> [a]
@@ -31,6 +35,21 @@ step (Assign target expr) =
      return value
 step (Expr e) = eval e
 step (Seq s₁ s₂) = step s₁ >> step s₂
+step (For var lsExpr body) = do
+  List ls <- eval lsExpr
+  fmap List . forM ls $ \ val -> S.set var val >> step body
+
+-- | Given code before a loop and the loop itself, return all the
+--   loop's intermediate states.
+runLoop :: Statement -> Statement -> (String, [S.State])
+runLoop prelude (For var lsExpr body) =
+  let states = do
+        _ <- step prelude
+        List ls <- eval lsExpr
+        forM ls $ \ val -> S.set var val >> step body >> S.env
+  in
+  (var, evalState states M.empty)
+runLoop _ _                           = error "Please supply a loop!"
 
 eval :: Expr -> Result Value
 eval (Var name)           = S.get name
@@ -58,8 +77,45 @@ wrap :: (Value -> Value -> Bool) -> (Value -> Value -> Value)
 wrap (⊗) v₁ v₂ = Bool $ v₁ ⊗ v₂
 
 doMethod :: Method -> String -> [Value] -> Result Value
-doMethod Add name args = do List vals <- S.get name
-                            let new = List $ vals ++ args
-                            S.set name new
-                            return new
+doMethod Add name args = do
+  List vals <- S.get name
+  let new = List $ vals ++ args
+  S.set name new
+  return new
+doMethod Pop name [] = do
+  List (v:vs) <- S.get name
+  S.set name $ List vs
+  return v
+doMethod Push name [v] = do
+  List vs <- S.get name
+  let new = List $ v:vs
+  S.set name new
+  return new
+doMethod Shift name [] = do
+  List vs <- S.get name
+  S.set name . List $ init vs
+  return $ last vs
+doMethod Unshift name [v] = do
+  List vs <- S.get name
+  let new = List $ vs ++ [v]
+  S.set name new
+  return new
+doMethod Empty name [] = do
+  List vals <- S.get name
+  return . Bool $ null vals
+doMethod Start name [] = do
+  Graph (n:_) _ <- S.get name
+  return n
+doMethod Mark name [] = do
+  Node idn graph _ value <- S.get name
+  let new = Node idn graph True value
+  g <- S.get graph
+  let g' = setNode g idn new
+  S.set graph g'
+  return new
+doMethod Neighbors name [] = do
+  Node idn graph _ _ <- S.get name
+  Graph nodes edges <- S.get graph
+  let idns = snd <$> filter (\ (a, _) -> a == idn) edges
+  return . List $ filter (\ (Node idn' _ _ _) -> idn' `elem` idns) nodes
 doMethod _ _ _               = error "Invalid method call!" 
