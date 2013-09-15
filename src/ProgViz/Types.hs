@@ -23,7 +23,7 @@ toMethod "add"    = Add
 toMethod "remove" = Remove
 toMethod _        = error "Unknown method name!"
 
-data Op = Plus | Minus | Mult | Ge | Le | Geq | Leq | Eq | Neq deriving (Show, Eq)
+data Op = Plus | Minus | Mult | Gt | Lt | Geq | Leq | Eq | Neq deriving (Show, Eq)
 
 -- | Runtime values in our tiny Python subset.
 data Value = Num Integer
@@ -39,6 +39,10 @@ liftNumOp :: (Integer -> Integer -> Integer) -> (Value -> Value -> Value)
 liftNumOp (⊗) (Num n₁) (Num n₂) = Num $ n₁ ⊗ n₂
 liftNumOp _ _ _                 = error "Wrong types!"
 
+liftBoolOp :: (Bool -> Bool -> Bool) -> (Value -> Value -> Value)
+liftBoolOp (⊗) (Bool b₁) (Bool b₂) = Bool $ b₁ ⊗ b₂
+liftBoolOp _ _ _                   = error "Wrong types!" 
+
 liftNumFn :: (Integer -> Integer) -> (Value -> Value)
 liftNumFn fn (Num n) = Num $ fn n
 liftNumFn _ _        = error "Wrong types!"
@@ -50,4 +54,3 @@ instance Num Value where
   abs         = liftNumFn (abs)
   signum      = liftNumFn (signum)
   fromInteger = Num
-  

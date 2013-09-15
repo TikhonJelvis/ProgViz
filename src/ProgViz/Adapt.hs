@@ -1,13 +1,19 @@
 module ProgViz.Adapt where
 
-import           Control.Applicative    ((<$>))
+import           Control.Applicative      ((<$>))
 
-import qualified Language.Python.Common as Py
+import qualified Language.Python.Common   as Py
+import qualified Language.Python.Version3 as Py
 
-import qualified ProgViz.Types          as PV
+import qualified ProgViz.Types            as PV
 
-convertModule :: Py.Module a -> [PV.Statement]
-convertModule (Py.Module statements) = map convertStatement statements
+testParse :: String -> PV.Statement
+testParse str = case Py.parseModule str "test" of
+  Left err       -> error $ "Parse failed!" ++ show err
+  Right (res, _) -> convertModule res
+
+convertModule :: Py.Module a -> PV.Statement
+convertModule (Py.Module statements) = foldl1 PV.Seq $ map convertStatement statements
 
 convertStatement :: Py.Statement a -> PV.Statement
 convertStatement (Py.Assign { Py.assign_to = [lhs], Py.assign_expr = rhs }) =
@@ -22,6 +28,8 @@ convertExpr (Py.Var { Py.var_ident = Py.Ident { Py.ident_string = name } }) =
 convertExpr (Py.Int { Py.int_value = n })                 = PV.NumLit n
 convertExpr (Py.Bool { Py.bool_value = b })               = PV.BoolLit b
 convertExpr (Py.Strings { Py.strings_strings = strings }) = PV.StrLit $ concat strings
+convertExpr (Py.BinaryOp { Py.operator = op, Py.left_op_arg = e₁, Py.right_op_arg = e₂ }) =
+  PV.Bin (convertOp op) (convertExpr e₁) (convertExpr e₂)
 convertExpr (Py.Call { Py.call_fun = fn, Py.call_args = args }) =
   case fn of
     Py.BinaryOp { Py.operator = Py.Dot {}, Py.left_op_arg = e₁, Py.right_op_arg = e₂ } ->
@@ -35,3 +43,14 @@ convertExpr (Py.Call { Py.call_fun = fn, Py.call_args = args }) =
   where extractExpr (Py.ArgExpr { Py.arg_expr = expr }) = expr
         extractExpr _                                   = error "Unsupported syntax!"
 convertExpr _ = error "Unsupported syntax!"
+
+convertOp :: Py.Op a -> PV.Op
+convertOp Py.LessThan {}          = PV.Lt
+convertOp Py.GreaterThan {}       = PV.Gt
+convertOp Py.LessThanEquals {}    = PV.Leq
+convertOp Py.GreaterThanEquals {} = PV.Geq
+convertOp Py.Equality {}          = PV.Eq
+convertOp Py.NotEquals {}         = PV.Neq
+convertOp Py.Multiply {}          = PV.Mult
+convertOp Py.Plus {}              = PV.Plus
+convertOp Py.Minus {}             = PV.Minus
