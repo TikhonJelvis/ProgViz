@@ -9,7 +9,8 @@ import           Text.Printf
 data Statement = Assign Expr Expr
                | Expr Expr
                | Seq Statement Statement
-               | For String Expr Statement deriving (Show, Eq)
+               | For String Expr Statement
+               | While Expr Statement deriving (Show, Eq)
 
 combine :: [Statement] -> Statement
 combine = foldl1 Seq
@@ -86,7 +87,7 @@ instance Show Value where
   show (Str s)                  = s
   show (Bool b)                 = show b
   show (List ls)                = intercalate "," $ show <$> ls
-  show (Node n graph b)         = printf "<%d,%s, %s, %s>" n graph (show b)
+  show (Node n graph b)         = printf "<%d,%s, %s>" n graph (show b)
   show (Graph name nodes edges) = name ++ "\n" ++ show nodes ++ "\n" ++ show edges
 
 listGet :: Value -> Value -> Value

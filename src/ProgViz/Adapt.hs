@@ -21,6 +21,8 @@ convertStatement (Py.Assign { Py.assign_to = [lhs], Py.assign_expr = rhs }) =
 convertStatement (Py.StmtExpr expr _) = PV.Expr $ convertExpr expr
 convertStatement (Py.For [Py.Var var _] ls body _ _) =
   PV.For (Py.ident_string var) (convertExpr ls) (PV.combine $ convertStatement <$> body)
+convertStatement (Py.While cond body _ _) =
+  PV.While (convertExpr cond) (PV.combine $ convertStatement <$> body)
 convertStatement _ = error "Unsupported language construct."
 
 convertExpr :: Py.Expr a -> PV.Expr
@@ -38,6 +40,10 @@ convertExpr (Py.UnaryOp { Py.operator = op, Py.op_arg = arg }) =
     Py.Not {}   -> PV.Un PV.Not (convertExpr arg)
     Py.Minus {} -> PV.Un PV.Neg (convertExpr arg)
     _           -> error "Invalid unary operator!"
+convertExpr (Py.Subscript v i _) =
+  case v of
+    (Py.Var (Py.Ident name _) _) -> PV.Index name (convertExpr i)
+    _ -> error "unsupported lhs for []"
 convertExpr (Py.Call { Py.call_fun = fn, Py.call_args = args }) =
   case fn of
     Py.BinaryOp { Py.operator = Py.Dot {}, Py.left_op_arg = e₁, Py.right_op_arg = e₂ } ->

@@ -1,3 +1,7 @@
+.msg {
+    display : none;
+}
+
 tspan {
     position : relative;
     top : -80;

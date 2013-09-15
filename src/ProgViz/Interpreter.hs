@@ -2,7 +2,7 @@ module ProgViz.Interpreter where
 
 import           Control.Applicative ((<$>), (<*>))
 import           Control.Monad       (forM)
-import           Control.Monad.State (evalState)
+import           Control.Monad.State (evalState, get)
 
 import           Data.List
 import qualified Data.Map            as M
@@ -39,6 +39,10 @@ step (Seq s₁ s₂) = step s₁ >> step s₂
 step (For var lsExpr body) = do
   List ls <- eval lsExpr
   fmap List . forM ls $ \ val -> S.set var val >> step body
+step (While cond body) = do
+  Bool c' <- eval cond
+  if c' then step body >> step (While cond body)
+        else return (Bool False)
 
 -- | Given code before a loop and the loop itself, return all the
 --   loop's intermediate states.
@@ -47,9 +51,21 @@ runLoop prelude (For var lsExpr body) =
   let states = do
         _ <- step prelude
         List ls <- eval lsExpr
-        forM ls $ \ val -> S.set var val >> step body >> S.env
+        st <- get
+        res <- forM ls $ \ val -> S.set var val >> step body >> S.env
+        return $ st : res
   in
   (var, evalState states M.empty)
+runLoop prelude (While cond body) =
+  let res = do
+        _ <- step prelude
+        Bool c' <- eval cond
+        if c' then step body >> go [] else return []
+  in ("", evalState res M.empty)
+  where go sts = do
+          st <- get
+          Bool c' <- eval cond
+          if c' then step body >> go (sts ++ [st]) else return $ sts ++ [st]
 runLoop _ _                           = error "Please supply a loop!"
 
 eval :: Expr -> Result Value
@@ -120,12 +136,15 @@ doMethod Mark name [] = do
   S.set graph g'
   return new
 doMethod Neighbors name [] = do
-  Node idn graph _2 <- S.get name
+  Node idn graph _ <- S.get name
   Graph _ nodes edges <- S.get graph
   let idns = snd <$> filter (\ (a, _) -> a == idn) edges
-  return . List $ filter (\ (Node idn' _ _) -> idn' `elem` idns) nodes
-doMethod Create "Graph" [Str name, List edges] =
-  return $ Graph name (node . toInt <$> nub edges) (pairs $ toInt <$> edges)
+      idns' = fst <$> filter (\ (_, a) -> a == idn) edges
+  return . List $ filter (\ (Node idn' _ _) -> idn' `elem` (idns ++ idns')) nodes
+doMethod Create "Graph" [Str name, List edges] = do
+  let graph = Graph name (node . toInt <$> nub edges) (pairs $ toInt <$> edges)
+  S.set name graph
+  return graph
   where node idn = Node idn name False
         toInt (Num n) = n
         toInt _       = error "Wrong type!"
