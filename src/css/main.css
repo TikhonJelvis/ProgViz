@@ -1,0 +1,41 @@
+ul.code-list {
+    position : relative;
+    left : 40px;
+    display  : inline-block;
+
+    list-style : none;
+}
+
+ul.code-list li {
+    position : relative;
+    width : 50px;
+
+    font-size : 24pt;
+
+    display : inline;
+    padding : 4px;
+    border : 5px solid #3366FF;
+}
+
+div.label {
+    position : relative;
+    margin-top : 20px;
+
+    width : 100%:
+}
+
+div.value {
+    position : relative;
+    left : 80px;
+    display : inline-block;
+
+    font-size : 24pt;
+    border : 5px solid #6699FF;
+}
+
+div.label span.label {
+    position : absolute;
+    float : left;
+
+    font-size : 24pt;
+}

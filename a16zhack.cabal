@@ -24,4 +24,5 @@ library
   build-depends:       base ==4.6.*,
                        containers ==0.5.*,
                        language-python ==0.4.*,
-                       monads-tf ==0.1.*
+                       monads-tf ==0.1.*,
+                       threepenny-gui ==0.3.*
