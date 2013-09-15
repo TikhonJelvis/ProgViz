@@ -10,6 +10,7 @@ data Expr = Var String
           | NumLit Integer
           | StrLit String
           | BoolLit Bool
+          | ListLit [Expr]
           | Index String Expr
           | Call String Method [Expr]
           | Bin Op Expr Expr deriving (Show, Eq)

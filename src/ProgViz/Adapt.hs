@@ -28,6 +28,8 @@ convertExpr (Py.Var { Py.var_ident = Py.Ident { Py.ident_string = name } }) =
 convertExpr (Py.Int { Py.int_value = n })                 = PV.NumLit n
 convertExpr (Py.Bool { Py.bool_value = b })               = PV.BoolLit b
 convertExpr (Py.Strings { Py.strings_strings = strings }) = PV.StrLit $ concat strings
+convertExpr (Py.List { Py.list_exprs = exprs }) =
+  PV.ListLit $ convertExpr <$> exprs
 convertExpr (Py.BinaryOp { Py.operator = op, Py.left_op_arg = e₁, Py.right_op_arg = e₂ }) =
   PV.Bin (convertOp op) (convertExpr e₁) (convertExpr e₂)
 convertExpr (Py.Call { Py.call_fun = fn, Py.call_args = args }) =

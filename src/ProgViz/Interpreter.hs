@@ -37,6 +37,7 @@ eval (Var name)           = S.get name
 eval (NumLit n)           = return $ Num n
 eval (StrLit s)           = return $ Str s
 eval (BoolLit b)          = return $ Bool b
+eval (ListLit ls)         = List <$> mapM eval ls
 eval (Index name i)       = listGet <$> S.get name <*> eval i
 eval (Bin op e₁ e₂)       = operate op <$> eval e₁ <*> eval e₂
 eval (Call e method args) = mapM eval args >>= doMethod method e
