@@ -19,10 +19,24 @@ library
   ghc-options:         -Wall
   exposed-modules:     ProgViz.Adapt,
                        ProgViz.Interpreter,
+                       ProgViz.Run,
                        ProgViz.State,
-                       ProgViz.Types
+                       ProgViz.Types,
+                       ProgViz.UI
   build-depends:       base ==4.6.*,
                        containers ==0.5.*,
                        language-python ==0.4.*,
                        monads-tf ==0.1.*,
                        threepenny-gui ==0.3.*
+
+
+Executable a16z
+  Main-is:           src/ProgViz/UI.hs
+  Build-depends:     base,
+                     containers ==0.5.*,
+                     language-python ==0.4.*,
+                     monads-tf ==0.1.*,
+                     threepenny-gui ==0.3.*,
+                     a16zhack
+  GHC-options:       -Wall
+  
