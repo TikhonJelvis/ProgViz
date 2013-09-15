@@ -1,3 +1,9 @@
+tspan {
+    position : relative;
+    top : -80;
+    font-size : 32;
+}
+
 ul.code-list {
     position : relative;
     left : 40px;
@@ -21,7 +27,7 @@ div.label {
     position : relative;
     margin-top : 20px;
 
-    width : 100%:
+    width : 100%;
 }
 
 div.value {
