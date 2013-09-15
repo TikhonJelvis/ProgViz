@@ -1,0 +1,4 @@
+for x in ls:
+  n.mark()
+  ns = n.neighbors()
+  n = ns[x]

@@ -1,0 +1,2 @@
+for x in ls:
+  sum = sum + x
