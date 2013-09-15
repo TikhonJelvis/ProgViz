@@ -2,17 +2,26 @@ module ProgViz.Types where
 
 -- | Statements in our simplified, desugared subset of Python. 
 data Statement = Assign Expr Expr
+               | Expr Expr
                | Seq Statement Statement deriving (Show, Eq)
 
 -- | Expressions in our simplified, desugared subset of Python.
 data Expr = Var String
+          | NumLit Integer
+          | StrLit String
+          | BoolLit Bool
           | Index String Expr
-          | Call Expr Method [Expr]
+          | Call String Method [Expr]
           | Bin Op Expr Expr deriving (Show, Eq)
 
 -- | We only support a few built-in methods.
 data Method = Add
             | Remove deriving (Show, Eq)
+
+toMethod :: String -> Method
+toMethod "add"    = Add
+toMethod "remove" = Remove
+toMethod _        = error "Unknown method name!"
 
 data Op = Plus | Minus | Mult | Ge | Le | Geq | Leq | Eq | Neq deriving (Show, Eq)
 
@@ -30,6 +39,7 @@ liftNumOp :: (Integer -> Integer -> Integer) -> (Value -> Value -> Value)
 liftNumOp (⊗) (Num n₁) (Num n₂) = Num $ n₁ ⊗ n₂
 liftNumOp _ _ _                 = error "Wrong types!"
 
+liftNumFn :: (Integer -> Integer) -> (Value -> Value)
 liftNumFn fn (Num n) = Num $ fn n
 liftNumFn _ _        = error "Wrong types!"
 
