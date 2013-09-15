@@ -59,20 +59,25 @@ eval (StrLit s)           = return $ Str s
 eval (BoolLit b)          = return $ Bool b
 eval (ListLit ls)         = List <$> mapM eval ls
 eval (Index name i)       = listGet <$> S.get name <*> eval i
+eval (Un Neg (NumLit b))  = return . Num $ negate b
+eval (Un Not (BoolLit b)) = return . Bool $ not b
+eval (Un {})              = error "Wrong type!"
 eval (Bin op e₁ e₂)       = operate op <$> eval e₁ <*> eval e₂
 eval (Call e method args) = mapM eval args >>= doMethod method e
 
 -- | Evaluate a binary operator.
 operate :: Op -> Value -> Value -> Value
-operate Plus  =      (+)
-operate Minus =      (-)
-operate Mult  =      (*)
-operate Gt    = wrap (>)
-operate Lt    = wrap (<)
-operate Geq   = wrap (>=)
-operate Leq   = wrap (<=)
-operate Eq    = wrap (==)
-operate Neq   = wrap (/=)
+operate Plus  =            (+)
+operate Minus =            (-)
+operate Mult  =            (*)
+operate Gt    = wrap       (>)
+operate Lt    = wrap       (<)
+operate Geq   = wrap       (>=)
+operate Leq   = wrap       (<=)
+operate Eq    = wrap       (==)
+operate Neq   = wrap       (/=)
+operate And   = liftBoolOp (&&)
+operate Or    = liftBoolOp (||)
 
 wrap :: (Value -> Value -> Bool) -> (Value -> Value -> Value)
 wrap (⊗) v₁ v₂ = Bool $ v₁ ⊗ v₂

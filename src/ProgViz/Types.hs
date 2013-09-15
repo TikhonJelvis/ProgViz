@@ -22,6 +22,7 @@ data Expr = Var String
           | ListLit [Expr]
           | Index String Expr
           | Call String Method [Expr]
+          | Un UnOp Expr
           | Bin Op Expr Expr deriving (Show, Eq)
 
 -- | We only support a few built-in methods.
@@ -51,7 +52,20 @@ toMethod "neighbors" = Neighbors
 toMethod "Create"    = Create
 toMethod _           = error "Unknown method name!"
 
-data Op = Plus | Minus | Mult | Gt | Lt | Geq | Leq | Eq | Neq deriving (Show, Eq)
+data UnOp = Neg
+          | Not deriving (Show, Eq)
+
+data Op = Plus
+        | Minus
+        | Mult
+        | Gt
+        | Lt
+        | Geq
+        | Leq
+        | Eq
+        | Neq
+        | And
+        | Or  deriving (Show, Eq)
 
 -- | Runtime values in our tiny Python subset.
 data Value = Num Integer

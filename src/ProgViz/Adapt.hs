@@ -33,6 +33,11 @@ convertExpr (Py.List { Py.list_exprs = exprs }) =
   PV.ListLit $ convertExpr <$> exprs
 convertExpr (Py.BinaryOp { Py.operator = op, Py.left_op_arg = e₁, Py.right_op_arg = e₂ }) =
   PV.Bin (convertOp op) (convertExpr e₁) (convertExpr e₂)
+convertExpr (Py.UnaryOp { Py.operator = op, Py.op_arg = arg }) =
+  case op of
+    Py.Not {}   -> PV.Un PV.Not (convertExpr arg)
+    Py.Minus {} -> PV.Un PV.Neg (convertExpr arg)
+    _           -> error "Invalid unary operator!"
 convertExpr (Py.Call { Py.call_fun = fn, Py.call_args = args }) =
   case fn of
     Py.BinaryOp { Py.operator = Py.Dot {}, Py.left_op_arg = e₁, Py.right_op_arg = e₂ } ->
@@ -57,4 +62,6 @@ convertOp Py.NotEquals {}         = PV.Neq
 convertOp Py.Multiply {}          = PV.Mult
 convertOp Py.Plus {}              = PV.Plus
 convertOp Py.Minus {}             = PV.Minus
+convertOp Py.And {}               = PV.And
+convertOp Py.Or {}                = PV.Or
 convertOp _                       = error "Unsupported operator."
